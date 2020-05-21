@@ -1,0 +1,4 @@
+MYSQL_USERNAME="clustercheckuser"
+MYSQL_PASSWORD="clustercheckpassword!"
+MYSQL_HOST="{{ vip }}"
+MYSQL_PORT="3306"

@@ -1,0 +1,26 @@
+- hosts:
+  - master
+  tasks:
+  - name: stop mariadb-galera-docker
+    shell: "docker stop galera1 && docker rm galera1"
+
+- hosts:
+  - slave1
+  tasks:
+  - name: stop mariadb-galera-docker
+    shell: "docker stop galera2 && docker rm galera2"
+
+- hosts:
+  - slave2
+  tasks:
+  - name: stop mariadb-galera-docker
+    shell: "docker stop galera3 && docker rm galera3"
+
+- hosts:
+  - all
+  tasks:
+#清理文件及镜像
+  - name: 清理目录和文件
+    file: name={{ opt_dir }}/mariadb state=absent
+  - name: rm image
+    shell: "docker rmi 75feb1db734a"

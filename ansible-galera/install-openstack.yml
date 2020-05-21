@@ -1,0 +1,93 @@
+- hosts:
+  - all
+  tasks:
+
+  - name: 安装软件包
+    shell: "yum install memcached python-memcached libvirt python-openstackclient \
+    openstack-keystone httpd mod_wsgi openstack-glance openstack-nova-api openstack-nova-conductor \
+    openstack-nova-console openstack-nova-novncproxy openstack-nova-scheduler openstack-nova-placement-api \
+    openstack-nova-compute openstack-neutron openstack-neutron-ml2 openstack-neutron-openvswitch \
+    openstack-dashboard openstack-cinder ebtables ipset openstack-cinder python-keystone -y"
+
+  - name: 发送配置memcacked脚本
+    copy: src={{ item }} dest=/opt/{{ item }} mode=0755
+    with_items:
+    - mem.sh
+
+  - name: 配置memcacked脚本
+    shell: "cd /opt/ && sh mem.sh"
+
+  - name: 启动memcacked
+    shell: "systemctl enable memcached.service && systemctl start memcached.service"
+
+
+  - name: 发送openrc环境变量登陆文件
+    copy: src={{ item }} dest=/root/{{ item }} mode=0755
+    with_items:
+    - openrc
+
+  - name: 备份keystone配置文件和httpd配置文件
+    shell: "cp /etc/keystone/keystone.conf{,.bak} && cp /etc/httpd/conf/httpd.conf{,.bak}"
+
+  - name: 三个节点执行，准备wsgi-keystone.conf文件
+    shell: "ln -s /usr/share/keystone/wsgi-keystone.conf /etc/httpd/conf.d/"
+
+  - name: 配置keystone参数
+    template: src={{ item }} dest=/etc/keystone/{{ item }} mode=0640 owner=root group=keystone
+    with_items:
+    - keystone.conf
+
+- hosts:
+  - node1
+  tasks:
+
+  - name: 发送openstack创建数据库脚本
+    template: src={{ item }} dest=/opt/{{ item }} mode=0755
+    with_items:
+    - createdb.sh
+
+  - name: 创建openstack数据库
+    shell: "cd /opt/ && sh createdb.sh"
+
+  - name: 发送keystone设置脚本
+    copy: src={{ item }} dest=/opt/{{ item }} mode=0755
+    with_items:
+    - keystone.sh
+
+- hosts:
+  - nodes
+  tasks:
+  - name: 修改集群认证文件权限
+    shell: "chown keystone:keystone /etc/keystone/credential-keys/ -R && chown keystone:keystone /etc/keystone/fernet-keys/ -R"
+
+- hosts:
+  - node1
+  tasks:
+
+  - name: node1上引导认证服务
+    shell: "keystone-manage bootstrap --bootstrap-password admin \
+    --bootstrap-admin-url http://vip:35358/v3/ \
+    --bootstrap-internal-url http://vip:5001/v3/ \
+    --bootstrap-public-url http://vip:5001/v3/ \
+    --bootstrap-region-id RegionOne"
+
+  - name: node1修改http配置文件
+    shell: "sed -i '/#ServerName www.example.com:80/a ServerName node1' /etc/httpd/conf/httpd.conf"
+
+- hosts:
+  - node2
+  tasks:
+  - name: node2修改http配置文件
+    shell: "sed -i '/#ServerName www.example.com:80/a ServerName node2' /etc/httpd/conf/httpd.conf"
+
+- hosts:
+  - node3
+  tasks:
+  - name: node3修改http配置文件
+    shell: "sed -i '/#ServerName www.example.com:80/a ServerName node3' /etc/httpd/conf/httpd.conf"
+
+- hosts:
+  - all
+  tasks:
+  - name: 启动httpd
+    shell: "systemctl enable httpd.service && systemctl restart httpd.service"

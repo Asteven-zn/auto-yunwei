@@ -1,0 +1,37 @@
+## ---------安装 common-app -----------
+- name: Install openstack-keystone httpd mod_wsgi
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - openstack-keystone
+    - httpd
+    - mod_wsgi
+
+## ---------create keystone.conf -----------
+- name: back old keystone.conf
+  shell: "mv /etc/keystone/keystone.conf{,.bak}"
+
+- name: create keystone.conf
+  template: src=keystone.conf dest=/etc/keystone/keystone.conf
+
+- name: change keystone.conf owner
+  shell: "chown root.keystone /etc/keystone/keystone.conf"
+
+# ---------config keystone-server -----------
+- name: copy config_keystone.sh to other node
+  template: src=config_keystone.sh dest={{ opt_dir }}/config_keystone.sh
+
+- name: running config_keystone.sh for admin
+  shell: "cd {{ opt_dir }}/ && sh config_keystone.sh"
+
+## ---------httpd-server -----------
+- name: enable httpd.service
+  shell: "systemctl enable httpd.service && systemctl restart httpd.service"
+
+# ---------keystone-service-endpoint -----------
+- name: copy keystone_user.sh to other node
+  template: src=keystone_user.sh dest={{ opt_dir }}/keystone_user.sh
+
+- name: running keystone_user.sh for create server and endpoint
+  shell: "cd {{ opt_dir }}/ && sh keystone_user.sh > {{ opt_dir }}/keystone_user.log 2>&1"

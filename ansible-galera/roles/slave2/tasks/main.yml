@@ -1,0 +1,3 @@
+#部署wsrep进程mariadb-master
+- name: 启动salve进程
+  shell: "cd {{ opt_dir }}/mariadb/ && sh slave2.sh"

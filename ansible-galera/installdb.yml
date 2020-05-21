@@ -1,0 +1,19 @@
+- hosts:
+  - all
+  roles:
+  - ready
+
+- hosts:
+  - master
+  roles:
+  - master
+
+- hosts:
+  - slave1
+  roles:
+  - slave1
+
+- hosts:
+  - slave2
+  roles:
+  - slave2

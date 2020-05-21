@@ -1,0 +1,18 @@
+#---------导入 yum-repo源 ---------
+- name: Install openstack-repo
+  yum:
+    name: centos-release-openstack-train
+    state: present
+#    enablerepo: tstack-common
+  become: true
+- name: Install repl-repo
+  yum:
+    name: epel-release
+    state: present
+#    enablerepo: tstack-common
+#      become: true
+
+- name: prepare some dirs
+  file: name={{ item }} state=directory
+  with_items:
+  - "{{ opt_dir }}"

@@ -1,0 +1,48 @@
+## ---------安装 openstack-nova -----------
+- name: Install openstack-nova
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - openstack-nova-api
+    - openstack-nova-conductor
+    - openstack-nova-novncproxy
+    - openstack-nova-scheduler
+
+## ---------create nova.conf -----------
+- name: back old nova.conf
+  shell: "mv /etc/nova/nova.conf{,.bak}"
+
+- name: create nova.conf
+  template: src=nova_con.conf dest=/etc/nova/nova.conf
+
+- name: change nova.conf owner
+  shell: "chown root.nova /etc/nova/nova.conf"
+
+## ---------load-nova-database -----------
+- name: load-nova-api-database
+  shell: "su -s /bin/sh -c \"nova-manage api_db sync\" nova"
+
+- name: load-nova-cell0-database
+  shell: "su -s /bin/sh -c \"nova-manage cell_v2 map_cell0\" nova"
+
+- name: load-nova-cell1-database
+  shell: "su -s /bin/sh -c \"nova-manage cell_v2 create_cell --name=cell1 --verbose\" nova"
+
+- name: load-nova-database
+  shell: "su -s /bin/sh -c \"nova-manage db sync\" nova"
+
+- name: nova cell0 and cell1 are registered correctly
+  shell: "su -s /bin/sh -c \"nova-manage cell_v2 list_cells\" nova"
+
+## ---------start nova -----------
+- name: start httpd
+  shell: "systemctl enable openstack-nova-api.service \
+    openstack-nova-scheduler.service \
+    openstack-nova-conductor.service \
+    openstack-nova-novncproxy.service
+    && systemctl restart \
+    openstack-nova-api.service \
+    openstack-nova-scheduler.service \
+    openstack-nova-conductor.service \
+    openstack-nova-novncproxy.service"

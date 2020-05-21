@@ -1,0 +1,36 @@
+## ---------安装 openstack-glance -----------
+- name: Install openstack-glance
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - openstack-glance
+
+## ---------create glance-api.conf -----------
+- name: back old glance-api.conf
+  shell: "mv /etc/glance/glance-api.conf{,.bak}"
+
+- name: create glance-api.conf
+  template: src=glance-api.conf dest=/etc/glance/glance-api.conf
+
+- name: change glance-api.conf owner
+  shell: "chown root.glance /etc/glance/glance-api.conf"
+
+## ---------load-glance-database -----------
+- name: load-glance-database
+  shell: "su -s /bin/sh -c \"glance-manage db_sync\" glance"
+
+## ---------openstack-glance-api.service -----------
+- name: enable openstack-glance-api.service
+  shell: "systemctl enable openstack-glance-api.service && systemctl restart openstack-glance-api.service"
+
+## ---------upload test image -----------
+- name: download test image
+  shell: "wget http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img -O {{ opt_dir }}/cirros-0.4.0-x86_64-disk.img"
+
+- name: upload test image
+  shell: "source /root/admin-openstack && cd {{ opt_dir }}/ && glance image-create --name \"cirros\" \
+  --file cirros-0.4.0-x86_64-disk.img \
+  --disk-format qcow2 \
+  --container-format bare \
+  --visibility public"

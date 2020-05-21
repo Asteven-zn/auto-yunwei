@@ -1,0 +1,29 @@
+- hosts:
+  - all
+  tasks:
+
+  - name: install haproxy
+    shell: "yum -y install haproxy && systemctl enable haproxy.service"
+
+  - name: 跟rsyslog结合配置haproxy日志
+    copy: src={{ item }} dest=/etc/rsyslog.d/{{ item }} mode=0755
+    with_items:
+    - haproxy.conf
+
+  - name: restart rsyslog
+    shell: "systemctl restart rsyslog.service && mv /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.bak"
+
+  - name: 准备haproxy配置文件
+    template: src={{ item }} dest=/etc/haproxy/{{ item }} mode=0755
+    with_items:
+    - haproxy.cfg
+
+  - name: 发送kernel.sh
+    copy: src={{ item }} dest=/opt/{{ item }} mode=0755
+    with_items:
+    - kernel.sh
+  - name: 修改kernel
+    shell: "cd /opt/ && sh kernel.sh"
+
+  - name: start haproxy
+    shell: "systemctl restart haproxy.service"

@@ -1,0 +1,25 @@
+## ---------安装 openstack-nova -----------
+- name: Install openstack-nova
+  yum:
+    name: "{{ item }}"
+    state: present
+    with_items:
+    - openstack-nova-compute
+
+## ---------create nova.conf -----------
+- name: back old nova.conf
+  shell: "mv /etc/nova/nova.conf{,.bak}"
+
+- name: create nova.conf
+  template: src=nova_con.conf dest=/etc/nova/nova.conf
+
+- name: change nova.conf owner
+  shell: "chown root.nova /etc/nova/nova.conf"
+
+## ---------start nova-compute -----------
+- name: start nova-compute
+  shell: "systemctl enable libvirtd.service \
+    openstack-nova-compute.service \
+    && systemctl restart \
+    libvirtd.service
+    openstack-nova-compute.service"

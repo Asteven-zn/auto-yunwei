@@ -1,0 +1,51 @@
+[all]
+192.168.210.131
+#192.168.210.130
+#192.168.210.132
+
+[controller]
+192.168.210.131
+
+[compute]
+#192.168.210.130
+
+[all:vars]
+## ---------数据库密码
+dbpass=123
+
+## ---------api调用ip,高可用环境为vip,非高可用环境为controller节点管理网ip,(配置域名解析,可以用主机名)
+api_ip=controller
+
+## ---------控制节点management_ip
+con01_ip=192.168.210.131
+#con02_ip=
+#con03_ip=
+
+## ---------控制节点租户网ip
+tenet_ip=192.168.8.141
+
+## ---------计算节点租户网ip
+
+## ---------外部网桥 br-ex 桥接的网卡
+externel_interface=ens36
+
+## ---------第二块磁盘（全部替换）
+#Second disk:sdb
+
+#系统要求7.3基础设施服务器
+
+#计算 node #集群网IP #租户网IP
+IP-com=192.168.38.10
+IP1-com=192.168.37.10
+
+#默认脚本存放目录(ha或者slave)
+opt_dir="/opt/openstack-slave"
+
+#部署目录，即 ansible 工作目录
+#base_dir="/etc/ansible"
+
+
+
+192.168.210.131 controller
+192.168.210.130 compute01
+192.168.210.132 compute02

@@ -1,0 +1,5 @@
+- hosts:
+  - controller
+  roles:
+  - nova_compute
+  - neutron_compute

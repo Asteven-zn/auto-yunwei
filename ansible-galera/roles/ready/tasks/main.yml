@@ -1,0 +1,28 @@
+#准备工作目录：
+- name: prepare some dirs
+  file: name={{ item }} state=directory mode=0755
+  with_items:
+  - "{{ opt_dir }}/mariadb"
+
+## ---------下载 配置文件及镜像 -----------
+- name: download configfile and iamge
+  copy: src={{ base_dir }}/bin/{{ item }} dest={{ opt_dir }}/mariadb/{{ item }} mode=0755
+  with_items:
+  - mariadb-galera.tar
+  - config.tar.gz
+
+#解压配置文件
+- name: 解压config
+  shell: "tar zxf {{ opt_dir }}/mariadb/config.tar.gz -C {{ opt_dir }}/mariadb/"
+
+#导入mariadb-galera镜像
+- name: 导入mariadb-galera
+  shell: "cd {{ opt_dir }}/mariadb/ && docker load -i mariadb-galera.tar"
+
+## ---------分发 脚本文件 -----------
+- name: download configfile and iamge
+  template: src={{ item }} dest={{ opt_dir }}/mariadb/{{ item }} mode=0755
+  with_items:
+  - master.sh
+  - slave1.sh
+  - slave2.sh

@@ -1,0 +1,8 @@
+#安装rabbit：
+- name: install erlang rabbitmq-server
+  shell: "yum install -y erlang rabbitmq-server.noarch"
+
+#开启rabbitmq服务
+- name: start rabbitmq
+  shell: "systemctl enable rabbitmq-server.service && systemctl restart rabbitmq-server.service \
+          && rabbitmq-plugins enable rabbitmq_management"

@@ -1,0 +1,25 @@
+## ---------安装 openstack-placement-api -----------
+- name: Install openstack-placement-api
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - openstack-placement-api
+
+## ---------create glance-api.conf -----------
+- name: back old placement.conf
+  shell: "mv /etc/placement/placement.conf{,.bak}"
+
+- name: create placement.conf
+  template: src=placement.conf dest=/etc/placement/placement.conf
+
+- name: change placement.conf owner
+  shell: "chown root.placement /etc/placement/placement.conf"
+
+## ---------load-placement-database -----------
+- name: load-placement-database
+  shell: "su -s /bin/sh -c \"placement-manage db sync\" placement"
+
+## ---------restart httpd -----------
+- name: restart httpd
+  shell: "systemctl restart httpd"

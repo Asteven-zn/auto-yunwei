@@ -1,0 +1,48 @@
+- hosts:
+  - all
+  tasks:
+
+  - name: 配置clustercheck工具集改善心跳检测
+    copy: src={{ item }} dest=/usr/bin/{{ item }} mode=0755
+    with_items:
+    - clustercheck
+
+  - name: 安装xinetd服务，用于监控Galera服务
+    shell: "yum install -y xinetd"
+
+  - name: 配置脚本检查数据库集群的状态
+    copy: src={{ item }} dest=/etc/xinetd.d/{{ item }} mode=0755
+    with_items:
+    - mysqlchk
+
+  - name: 修改services参数
+    shell: "echo 'mysqlchk        9200/tcp                # mysqlchk' >> /etc/services"
+
+  - name: 启动xinetd并且chkconfig xinetd on
+    shell: "systemctl start xinetd && chkconfig xinetd on"
+
+  - name: 三个控制节点准备clustercheck文件，并设置用户名和密码
+    template: src={{ item }} dest=/etc/sysconfig/{{ item }} mode=0755
+    with_items:
+    - clustercheck
+
+
+- hosts:
+  - node1
+  tasks:
+  - name: 发送Haproxy能监控Galera数据库集群创建的用户脚本
+    template: src={{ item }} dest=/opt/{{ item }} mode=0755
+    with_items:
+    - createdbuser.sh
+
+  - name: 创建Haproxy能监控Galera数据库集群的用户
+    shell: "cd /opt/ && sh createdbuser.sh"
+
+- hosts:
+  - all
+  tasks:
+  - name: 所有node重新开启haproxy，并自启动
+    shell: "systemctl restart haproxy && systemctl enable haproxy"
+
+  - name: 检查测试数据库检测的脚本是否synced
+    shell: "/usr/bin/clustercheck"

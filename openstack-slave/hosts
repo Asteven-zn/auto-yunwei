@@ -1,0 +1,44 @@
+[all:children]
+controller-node
+compute-node
+
+[controller-node]
+## ***单控制节点模式***
+## management_ip为节点管理网卡ip,tenet_ip为节点租户网卡ip,externel_interface为外部网络网卡
+controller management_ip=192.168.210.131 tenet_ip=192.168.8.141 externel_interface=ens36
+
+## ***高可用模式***
+## management_ip为节点管理网ip,tenet_ip为节点租户网ip,externel_interface为外部网络网卡
+#controller[01:03]
+#controller01 management_ip=192.168.210.131 tenet_ip=192.168.8.141 externel_interface=ens36
+#controller02 management_ip=192.168.210.130 tenet_ip=192.168.8.142 externel_interface=ens36
+#controller03 management_ip=192.168.210.132 tenet_ip=192.168.8.143 externel_interface=ens36
+
+[compute-node]
+compute[01:02]
+compute01  management_ip=192.168.210.130 tenet_ip=192.168.8.142
+compute02  management_ip=192.168.210.132 tenet_ip=192.168.8.143
+
+
+[all:vars]
+## 数据库密码
+dbpass=123
+
+## api调用ip,高可用环境为vip
+## 非高可用环境为controller节点管理网ip,(配置域名解析,可以用主机名)
+api_ip=controller
+
+## 第二块磁盘（全部替换）
+#Second disk:sdb
+
+#系统要求7.3基础设施服务器
+
+#计算 node #集群网IP #租户网IP
+IP-com=192.168.38.10
+IP1-com=192.168.37.10
+
+## 默认脚本存放目录(ha或者slave)
+opt_dir="/opt/openstack-slave"
+
+## 部署目录，即 ansible 工作目录
+#base_dir="/etc/ansible"

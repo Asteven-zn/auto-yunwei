@@ -1,0 +1,9 @@
+- hosts:
+  - controller-node
+  roles:
+  - common
+  - keystone
+  - glance
+  - placement
+  - nova_controller
+  - neutron_controller

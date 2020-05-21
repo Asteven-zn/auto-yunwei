@@ -1,0 +1,65 @@
+- name: stop openstack
+  shell: "systemctl stop \
+    neutron-server.service \
+    neutron-dhcp-agent.service \
+    openvswitch neutron-openvswitch-agent \
+    neutron-metadata-agent.service \
+    openstack-nova-api.service \
+    openstack-nova-scheduler.service \
+    openstack-nova-conductor.service \
+    openstack-nova-novncproxy.service openstack-glance-api.service \
+    && systemctl disable \
+    neutron-server.service \
+    neutron-dhcp-agent.service \
+    openvswitch neutron-openvswitch-agent \
+    neutron-metadata-agent.service \
+    openstack-nova-api.service \
+    openstack-nova-scheduler.service \
+    openstack-nova-conductor.service \
+    openstack-nova-novncproxy.service openstack-glance-api.service"
+
+- name: stop common-server
+  shell: "systemctl stop \
+    httpd etcd memcached rabbitmq-server\
+    && systemctl disable \
+    httpd etcd memcached rabbitmq-server"
+
+- name: copy clean.sh for clean database to other node
+  template: src=clean.sh dest={{ opt_dir }}/clean.sh
+
+- name: running clean.sh for clean database to other node
+  shell: "cd {{ opt_dir }}/ && sh clean.sh"
+
+## ---------remove common-app-server -----------
+- name: remove common-app-server
+  shell: "yum remove -y {{ item }}"
+  with_items:
+    - etcd
+    - memcached
+    - rabbitmq-server
+    - python2-PyMySQL
+    - mariadb
+    - mariadb-serve
+    - openstack-selinux
+    - python-openstackclient
+    - openstack-utils
+    - httpd
+
+## ---------remove config-file -----------
+- name: remove config-file
+  shell: "rm -rf /etc/{{ item }}"
+  with_items:
+    - etcd
+    - keystone
+    - glance
+    - nova
+    - neutron
+    - cinder
+    - httpd
+    - sysconfig/memcached
+
+- name: remove deploy-file
+  shell: "rm -rf {{ item }}"
+  with_items:
+    - /root/admin-openstack
+    - /opt/openstack-slave

@@ -1,0 +1,72 @@
+- hosts:
+  - all
+  roles:
+  - rabbit
+
+#下载rabbitmq变量文件
+- hosts: node1
+  tasks:
+  - name: download configfile node1
+    template: src={{ item }} dest=/etc/rabbitmq/rabbitmq-env.conf mode=0755
+    with_items:
+    - rabbitmq-env1.conf
+- hosts: node2
+  tasks:
+  - name: download configfile node2
+    template: src={{ item }} dest=/etc/rabbitmq/rabbitmq-env.conf mode=0755
+    with_items:
+    - rabbitmq-env2.conf
+- hosts: node3
+  tasks:
+  - name: download configfile node3
+    template: src={{ item }} dest=/etc/rabbitmq/rabbitmq-env.conf mode=0755
+    with_items:
+    - rabbitmq-env3.conf
+
+#重启rabbitmq服务
+- hosts: all
+  tasks:
+  - name: restart rabbitmq
+    shell: "systemctl restart rabbitmq-server.service"
+
+#创建openstack用户并设置为管理员
+- hosts: node1
+  tasks:
+  - name: create openstack user
+    shell: "rabbitmqctl add_user openstack admin"
+- hosts: node1
+  tasks:
+  - name: set openstack is administrator
+    copy: src={{ item }} dest=/opt/setuser.sh mode=0755
+    with_items:
+    - setuser.sh
+- hosts: node1
+  tasks:
+  - name: setuser administrator
+    shell: "cd /opt/ && sh setuser.sh"
+
+#node1 分发cookie
+- hosts: node1
+  tasks:
+  - name: copy cookie
+    shell: "scp /var/lib/rabbitmq/.erlang.cookie node2:/var/lib/rabbitmq/.erlang.cookie && scp /var/lib/rabbitmq/.erlang.cookie node3:/var/lib/rabbitmq/.erlang.cookie"
+
+#node2 加入集群
+- hosts: node2
+  tasks:
+    - name: copy node2 join file
+      copy: src={{ item }} dest=/opt/join.sh mode=0755
+      with_items:
+      - join.sh
+    - name: node2 join cluster
+      shell: "cd /opt/ && sh join.sh"
+
+#node3 加入集群
+- hosts: node3
+  tasks:
+    - name: copy node3 join file
+      copy: src={{ item }} dest=/opt/join.sh mode=0755
+      with_items:
+      - join.sh
+    - name: node3 join cluster
+      shell: "cd /opt/ && sh join.sh"

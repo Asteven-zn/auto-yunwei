@@ -1,0 +1,56 @@
+## ---------安装 common-app -----------
+- name: Install common-app and python-openstackclient openstack-selinux openstack-utils
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - python-openstackclient
+    - openstack-selinux
+    - openstack-utils
+    - mariadb-server
+    - mariadb
+    - python2-PyMySQL
+    - rabbitmq-server
+    - memcached
+    - etcd
+
+## ---------create mariadb-configfile -----------
+- name: create /etc/my.cnf.d/openstack.cnf
+  template: src=openstack.cnf dest=/etc/my.cnf.d/openstack.cnf
+
+## ---------enable mariadb-service -----------
+- name: enable mariadb-service
+  shell: "systemctl enable mariadb.service && systemctl start mariadb.service"
+
+## ---------mysql_secure_installation -----------
+- name: copy mysql_secure_installation.sh to other node
+  template: src=mysql_secure_installation.sh dest={{ opt_dir }}/mysql_secure_installation.sh
+
+- name: sh mysql_secure_installation 数据库初始化
+  shell: "cd {{ opt_dir }}/ && sh mysql_secure_installation.sh"
+
+## ---------enable and config rabbitmq-server -----------
+- name: enable rabbitmq-server
+  shell: "systemctl enable rabbitmq-server.service && systemctl start rabbitmq-server.service"
+
+- name: copy set_rabbitmq_memcache.sh to other node
+  template: src=set_rabbitmq_memcache.sh dest=/{{ opt_dir }}/set_rabbitmq_memcache.sh
+
+- name: sh set_rabbitmq_memcache.sh
+  shell: "cd {{ opt_dir }}/ && sh set_rabbitmq_memcache.sh"
+
+- name: enable memcached
+  shell: "systemctl enable memcached.service && systemctl start memcached.service"
+
+# ---------enable etcd -----------
+- name: copy etcd.conf to other node
+  template: src=etcd.conf dest=/etc/etcd/etcd.conf
+- name: enable etcd
+  shell: "systemctl enable etcd && systemctl restart etcd"
+
+## ---------创建 各服务数据库 -----------
+- name: copy loaddb.sh to controller node
+  template: src=loaddb.sh dest={{ opt_dir }}/loaddb.sh
+
+- name: 创建 openstack-server 数据库
+  shell: "cd {{ opt_dir }}/ && sh loaddb.sh > {{ opt_dir }}/loaddb.log 2>&1"

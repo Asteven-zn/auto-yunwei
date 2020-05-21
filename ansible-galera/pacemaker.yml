@@ -1,0 +1,47 @@
+- hosts:
+  - all
+  #roles:
+  #- rabbit
+  tasks:
+  - name: copy ha-repo
+    copy: src={{ item }} dest=/etc/yum.repos.d/{{ item }} mode=0755
+    with_items:
+    - ha-clustering.repo
+
+  - name: install pacemaker
+    shell: "yum install -y lvm2 cifs-utils quota psmisc pcs pacemaker corosync fence-agents-all resource-agents crmsh"
+
+  - name: start pacemaker
+    shell: "systemctl enable pcsd corosync && systemctl start pcsd"
+
+#设置集群密码并设置corosync监听
+  - name: set hacluster passwd
+    shell: "echo admin | passwd --stdin hacluster"
+  - name: copy corosync 监听配置文件
+    copy: src={{ item }} dest=/etc/corosync/{{ item }} mode=0755
+    with_items:
+    - corosync.conf
+
+#设置集群node无密钥登陆其他节点
+- hosts:
+  - node1
+
+  - name: node set ssh-key
+    shell: "ssh-keygen -t rsa && ssh-copy-id node2 && ssh-copy-id node3"
+
+  - name: 设置集群互相认证，在ha-node1上running
+    shell: "pcs cluster auth node1 node2 node3 -u hacluster -p admin --force"
+
+  - name: 在node1创建并启动名称为openstack-cluster，并将node1 node2 node3为集群成员
+    shell: "pcs cluster setup --force --name openstack-cluster node1 node2 node3"
+
+  - name: node1上开启集群
+    shell: "pcs cluster enable --all && pcs cluster start --all && pcs cluster status"
+
+  - name: 禁用STONITH,无法仲裁，选择忽略
+    shell: "pcs property set stonith-enabled=false && pcs property set no-quorum-policy=ignore"
+
+  - name: 设置vip
+    shell: "pcs resource create vip ocf:heartbeat:IPaddr2 \
+    ip={{ vip }} cidr_netmask=24 nic={{ interface }} op start interval=0s \
+    timeout=20s op stop interval=0s timeout=20s op monitor interval=30s meta priority=100"
