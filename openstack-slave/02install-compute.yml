@@ -1,5 +1,20 @@
+## ---------config nova-compute -----------
 - hosts:
-  - controller
+  - compute-node
   roles:
   - nova_compute
+
+## ---------add nova-compute to database -----------
+- hosts:
+  - controller-node
+  tasks:
+    - name: Add the compute node to the cell database
+      shell: "source /root/admin-openstack && openstack compute service list --service nova-compute"
+
+    - name: Discover compute hosts
+      shell: "su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova"
+
+- hosts:
+  - compute-node
+  roles:
   - neutron_compute

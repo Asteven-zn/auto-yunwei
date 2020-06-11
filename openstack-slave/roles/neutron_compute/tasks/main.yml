@@ -1,0 +1,51 @@
+## ---------安装 openstack-neutron -----------
+- name: Install openstack-neutron
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - openvswitch
+    - openstack-neutron-openvswitch
+    - ebtables
+    - ipset
+
+## ---------create neutron.conf -----------
+- name: back old neutron.conf
+  shell: "mv /etc/neutron/{{ item }}{,.bak}"
+  with_items:
+  - neutron.conf
+
+- name: create neutron.conf
+  template: src={{ item }} dest=/etc/neutron/{{ item }} mode=0755
+  with_items:
+  - neutron.conf
+
+- name: change neutron.conf owner
+  shell: "chown root.neutron /etc/neutron/{{ item }}"
+  with_items:
+  - neutron.conf
+
+## ---------create openvswitch.conf -----------
+- name: back old openvswitch.conf
+  shell: "mv /etc/neutron/plugins/ml2/{{ item }}{,.bak}"
+  with_items:
+  - openvswitch_agent.ini
+
+- name: create openvswitch.conf
+  template: src={{ item }} dest=/etc/neutron/plugins/ml2/{{ item }} mode=0755
+  with_items:
+  - openvswitch_agent.ini
+
+- name: change openvswitch.conf owner
+  shell: "chown root.neutron /etc/neutron/plugins/ml2/{{ item }}"
+  with_items:
+  - openvswitch_agent.ini
+
+## ---------restart-openstack-nova-compute.service -----------
+- name: restart-openstack-nova-compute.service
+  shell: "systemctl restart openstack-nova-compute.service"
+
+## ---------start neutron server-----------
+- name: start neutron
+  shell: "systemctl enable openvswitch neutron-openvswitch-agent
+    && systemctl restart openvswitch neutron-openvswitch-agent"

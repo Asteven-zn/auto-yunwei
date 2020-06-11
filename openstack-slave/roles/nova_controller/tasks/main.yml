@@ -19,6 +19,16 @@
 - name: change nova.conf owner
   shell: "chown root.nova /etc/nova/nova.conf"
 
+## ---------config 00-nova-placement-api.conf -----------
+#- name: copy 00-nova-placement-api.conf
+#  template: src=00-nova-placement-api.conf dest={{ opt_dir }}/
+
+#- name: config 00-nova-placement-api.conf
+#  shell: "cat {{ opt_dir }}/00-nova-placement-api.conf >> /etc/httpd/conf.d/00-nova-placement-api.conf"
+
+#- name: restart httpd
+#  shell: "systemctl restart httpd"
+
 ## ---------load-nova-database -----------
 - name: load-nova-api-database
   shell: "su -s /bin/sh -c \"nova-manage api_db sync\" nova"
@@ -36,7 +46,7 @@
   shell: "su -s /bin/sh -c \"nova-manage cell_v2 list_cells\" nova"
 
 ## ---------start nova -----------
-- name: start httpd
+- name: start nova
   shell: "systemctl enable openstack-nova-api.service \
     openstack-nova-scheduler.service \
     openstack-nova-conductor.service \

@@ -7,3 +7,5 @@
   - placement
   - nova_controller
   - neutron_controller
+  - dashboard_controller
+  - cinder_controller

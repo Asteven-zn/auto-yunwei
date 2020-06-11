@@ -1,0 +1,37 @@
+## ---------安装 openstack-cinder -----------
+- name: Install openstack-cinder
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - openstack-cinder
+
+## ---------create cinder.conf -----------
+- name: back old cinder.conf
+  shell: "mv /etc/cinder/cinder.conf{,.bak}"
+
+- name: create cinder.conf
+  template: src=cinder.conf dest=/etc/cinder/cinder.conf
+
+- name: change cinder.conf owner
+  shell: "chown root.cinder /etc/cinder/cinder.conf"
+
+## ---------load-cinder-database -----------
+- name: load-cinder-database
+  shell: "su -s /bin/sh -c \"cinder-manage db sync\" cinder"
+
+## ---------openstack-cinder-service -----------
+- name: enable openstack-cinder-service
+  shell: "systemctl enable openstack-nova-api.service openstack-cinder-api.service openstack-cinder-scheduler.service \
+  && systemctl restart openstack-nova-api.service openstack-cinder-api.service openstack-cinder-scheduler.service"
+
+## ---------upload test image -----------
+- name: download test image
+  shell: "wget http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img -O {{ opt_dir }}/cirros-0.4.0-x86_64-disk.img"
+
+- name: upload test image
+  shell: "source /root/admin-openstack && cd {{ opt_dir }}/ && cinder image-create --name \"cirros\" \
+  --file cirros-0.4.0-x86_64-disk.img \
+  --disk-format qcow2 \
+  --container-format bare \
+  --visibility public"

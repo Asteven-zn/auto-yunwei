@@ -1,0 +1,29 @@
+## ---------安装 common-app -----------
+- name: Install openstack-keystone httpd mod_wsgi
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - openstack-dashboard
+
+## ---------create local_settings -----------
+- name: back old local_settings
+  shell: "mv /etc/openstack-dashboard/local_settings{,.bak}"
+
+- name: create local_settings
+  template: src=local_settings dest=/etc/openstack-dashboard/local_settings
+
+- name: change local_settings owner
+  shell: "chown root.apache /etc/openstack-dashboard/local_settings"
+
+## ---------copy openstack-dashboard.conf -----------
+- name: copy openstack-dashboard.conf
+  template: src=openstack-dashboard.conf dest={{ opt_dir }}/
+
+# ---------config openstack-dashboard.conf -----------
+- name: add  WSGIApplicationGroup %{GLOBAL} to openstack-dashboard.conf
+  shell: "cat {{ opt_dir }}/openstack-dashboard.conf >> /etc/httpd/conf.d/openstack-dashboard.conf"
+
+## ---------restart-httpd-server memcached.service-----------
+- name: restart httpd.service memcached.service
+  shell: "systemctl restart httpd.service memcached.service"

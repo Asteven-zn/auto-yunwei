@@ -3,7 +3,7 @@
   yum:
     name: "{{ item }}"
     state: present
-    with_items:
+  with_items:
     - openstack-nova-compute
 
 ## ---------create nova.conf -----------
@@ -11,7 +11,7 @@
   shell: "mv /etc/nova/nova.conf{,.bak}"
 
 - name: create nova.conf
-  template: src=nova_con.conf dest=/etc/nova/nova.conf
+  template: src=nova_com.conf dest=/etc/nova/nova.conf
 
 - name: change nova.conf owner
   shell: "chown root.nova /etc/nova/nova.conf"
